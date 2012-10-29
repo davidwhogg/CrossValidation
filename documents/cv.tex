@@ -1,0 +1,40 @@
+\documentclass[12pt]{article}
+
+\newcommand{\given}{\,|\,}
+\newcommand{\setof}[1]{\left\{{#1}\right\}}
+\newcommand{\train}{\mathrm{train}}
+\newcommand{\valid}{\mathrm{valid}}
+\newcommand{\dd}{\mathrm{d}}
+
+\begin{document}
+
+\begin{eqnarray}
+p(D\given\theta,H) &=& \prod_{n=1}^N p(D_n\given\theta,H)
+\\
+D &\equiv& \setof{D_n}_{n=1}^N
+\\
+D^\train_k &\equiv& \setof{D_n}_{n\in\train(k)}
+\\
+D^\valid_k &\equiv& \setof{D_n}_{n\in\valid(k)}
+\\
+p(D^\train_k\given\theta,H) &=& \prod_{n\in\train(k)} p(D_n\given\theta,H)
+\\
+p(D^\valid_k\given\theta,H) &=& \prod_{n\in\valid(k)} p(D_n\given\theta,H)
+\\
+p(\theta\given D^\train_k,H) &=& \frac{1}{Z_{Hk}}\,p(\theta\given H)\,p(D^\train_k\given\theta,H)
+\\
+Z_{Hk} &\equiv& \int p(D^\train_k\given\theta,H)\,p(\theta\given H)\,\dd\theta
+\\
+\theta_k &\leftarrow& \arg\max_\theta p(D^\train_k\given\theta,H)
+\\
+L_k &\equiv& p(D^\valid_k\given\theta_k,H)
+\\
+L &\equiv& \prod_{k=1}^K L_k
+\\
+\zeta_k &\equiv& \int p(D^\valid_k\given\theta,H)\,p(\theta\given D^\train_k,H)\,\dd\theta
+\\
+Z &\equiv& \int p(D\given\theta,H)\,p(\theta\given H)\,\dd\theta
+\quad,
+\end{eqnarray}
+
+\end{document}
