@@ -21,7 +21,7 @@ p(D^\train_k\given\theta,H) &=& \prod_{n\in\train(k)} p(D_n\given\theta,H)
 \\
 p(D^\valid_k\given\theta,H) &=& \prod_{n\in\valid(k)} p(D_n\given\theta,H)
 \\
-p(\theta\given D^\train_k,H) &=& \frac{1}{Z_{Hk}}\,p(\theta\given H)\,p(D^\train_k\given\theta,H)
+p(\theta\given D^\train_k,H) &=& \frac{1}{Z_{Hk}}\,p(D^\train_k\given\theta,H)\,p(\theta\given H)
 \\
 Z_{Hk} &\equiv& \int p(D^\train_k\given\theta,H)\,p(\theta\given H)\,\dd\theta
 \\
