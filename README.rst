@@ -7,8 +7,9 @@ Author
 ------
 
 - **David W. Hogg** (NYU)
+- **Jake Vanderplas** (UW)
 
 License
 -------
 
-Copyright 2012 David W. Hogg.
+Copyright 2012 the authors.
