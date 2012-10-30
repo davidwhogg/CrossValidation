@@ -6,7 +6,140 @@
 \newcommand{\valid}{\mathrm{valid}}
 \newcommand{\dd}{\mathrm{d}}
 
+\newcommand{\Dtr}{\ensuremath{D^{\rm TR}}}
+\newcommand{\Dcv}{\ensuremath{D^{\rm CV}}}
+
 \begin{document}
+
+\section{Outline}
+\begin{itemize}
+\item Bayesianism is a solid approach, but the Bayes integral is hard \&
+  involves strong assumptions. {\bf Multi-dimensional integration
+    is generally expensive}
+\item CV is easy and has no -- or very few -- free parameters (we'll have to
+  think about how choice of CV scheme affects this)
+  {\bf Multi-dimensional optimization is generally cheaper}.
+\item Both approaches have {\it predictive power}, and for this reason we
+  should expect them to be related.
+\item Main subject of the paper: how can we determine {\it a priori} when the
+  two will give similar results?
+\item (Aside on LTFDFCF \& model selection?  Or leave for a future paper...)
+\end{itemize}
+
+\section{How Jake approached this}
+Let's start from the Bayesian approach.  We have
+\begin{equation}
+  P(M|D,I) = \frac{P(D|M,I)P(M|I)}{P(D|I)}
+\end{equation}
+where $M$ is the model (not the particular parameters, but the model itself),
+$D$ is the observed data, and $I$ is any additional information.
+In a Bayesian setting, model selection can be accomplished through the odds
+ratio
+\begin{equation}
+  O_{21} = \frac{P(M_2|D,I)}{P(M_1|D,I)}
+\end{equation}
+The nice thing here is that the denominator (which is hard to compute) cancels
+leaving
+\begin{equation}
+  O_{21} = \frac{P(D|M_1,I)}{P(D|M_2,I)}\frac{P(M_1|I)}{P(M_2|I)}
+\end{equation}
+The first quotient is known as the {\it Bayes Factor}, and the second is the
+ratio of the model priors.  The $P(D|M,I)$ terms are the {\it Evidence},
+and are computed via an integral over all possible model parameters:
+\begin{equation}
+  P(D|M, I) = \int \dd^N\theta_M P(D|M, I, \theta_M)P(\theta_M|M, I)
+\end{equation}
+We've explicitly labeled the model parameters with $M$ to remind the reader
+that $\theta_M$ are model parameters {\it within the model} $M$.
+These model parameters $\theta_M$ can in cases of interest be
+very high-dimensional:
+this is why the Bayesian model selection problem is computationally difficult.
+
+\subsection{Relating this to CV}
+Let's assume we're doing single-fold cross-validation, so that the data is
+split into a single training set \Dtr and a single cross-valitation set
+\Dcv, with no overlap.  Because of the independence of \Dtr and \Dcv, we can
+write $P(D|\cdot) = P(\Dtr,\Dcv|\cdot) = P(\Dtr|\cdot)P(\Dcv|\cdot)$, and
+we have
+\begin{equation}
+  P(D|M,I) = \int \dd^N\theta_M P(\Dtr|M, I, \theta_M) P(\Dcv|M,I,\theta_M)P(\theta_M|M,I)
+\end{equation}
+The terms in this integral are straightforward to understand:
+\begin{description}
+  \item[$P(\Dtr|M, I, \theta_M)$] is the likelihood of the training data.
+    In the cross-validation approach, the parameters $\hat{\theta}^{max}_M$ which
+    maximize the likelihood are determined for each possible model $M$.
+  \item[$P(\Dcv|M, I, \theta_M)$] is the likelihood of the cross-validation
+    data.  In the cross-validation approach, this is maximized for $M$,
+    for parameters $\theta_M = \hat{\theta}^{max}_M$ at their fixed, to choose
+    the model $M$.
+  \item[$P(\theta_M|M,I)$] is the prior on the model parameters.  This is
+    implicitly assumed to be constant in the cross-validation approach.
+\end{description}
+
+In order to recover the Cross-validation results within the Bayesian approach,
+we can start by assuming the training likelihood is narrowly peaked around its
+maximum likelihood value.  We can write this as
+\begin{equation}
+  P(\Dtr|M, I, \theta_M) \approx \delta(\theta_M - \hat{\theta}^{max}_M
+\end{equation}
+Putting in this assumption yields
+\begin{equation}
+  P(D|M,I) = P(\Dcv|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
+\end{equation}
+Returning to the Bayesian odds ratio, we find
+\begin{equation}
+  O_{21} = \frac{P(\Dcv|\hat{\theta}^{max}_{M1},M_1,I)}
+               {P(\Dcv|\hat{\theta}^{max}_{M2},M_2,I)}
+          \frac{P(\hat{\theta}^{max}_{M1},M_1|I)}
+               {P(\hat{\theta}^{max}_{M2},M_2|I)}
+\end{equation}
+where we have used the identity $P(\theta|M,I)P(M|I) = P(M,\theta|I)$.
+This looks very similar to the Bayesian odds ratio, except for a few
+subtle changes:
+\begin{itemize}
+  \item We have replaced the full {\it integrated} data likelihood
+    $P(D|M,I)$ with the likelihood at a particular value of the model
+    parameters, $P(D|\hat{\theta}^{max}_{M},M,I)$.
+  \item We have replaced the full {\it integrated} model prior $P(M|I)$
+    with the prior for a particular choice of the model,
+    $P(\hat{\theta}^{max}_{M},M|I)$.
+\end{itemize}
+If we assume uninformative priors such that the second quotient is 1, then
+we recover the cross-validation model.
+This exercise has the benefit of explicitly showing which assumptions the
+cross-validation approach makes as compared to the Bayesian approach.
+
+First, in order to approximate the training likelihood as a delta function,
+it must be the case that the training likelihood is very narrow compared to
+both the model prior and the cross-validation likelihood.  In other words,
+the model prior and cross-validation likelihood are slowly varying across
+the significant portion of the training likelihood.  Though this is a strong
+assumption, it is accurate (at least approximately) in many cases of interest:
+an uninformative prior will be (by definition) much wider than the training
+likelihood.  Additionally, because the cross-validation set is often much
+smaller than the training set, it will give a much weaker constraint on the
+model.  For this reason, it is safe to assume that the cross-validation
+likelihood is wider than the training likelihood.
+
+Second, the model priors must be roughly equal.  This allows us to drop the
+second term in the above equation and recover the likelihood formulation.
+
+We should summarize these assumptions here:
+\begin{enumerate}
+  \item The {\it training} likelihood does not have heavy tails, and is
+    approximately symmetric and strongly peaked.
+  \item The {\it cross-validation} likelihood is approximately constant
+    across the important region of the training likelihood.
+  \item The {\it parameter prior} is approximately constant across the important
+    region of the training likelihood (that is, it is uninformative).
+  \item The {\it model prior} for different models is approximately equal
+    (that is, the model prior is uninformative).
+\end{enumerate}
+When these assumptions are met, the cross-validation and bayesian approaches
+will lead to similar results.
+
+\section{Hogg's Equations}
 
 \begin{eqnarray}
 p(D\given\theta,H) &=& \prod_{n=1}^N p(D_n\given\theta,H)
