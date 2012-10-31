@@ -8,6 +8,7 @@
 
 \newcommand{\Dtr}{\ensuremath{D^{\rm TR}}}
 \newcommand{\Dcv}{\ensuremath{D^{\rm CV}}}
+\newcommand{\eqn}[1]{eq.~\ref{eq:#1}}
 
 \begin{document}
 
@@ -26,43 +27,185 @@
 \item (Aside on LTFDFCF \& model selection?  Or leave for a future paper...)
 \end{itemize}
 
-\section{How Jake approached this}
-Let's start from the Bayesian approach.  We have
+\section{Model Selection}
+In model selection, we want to choose between a model $M_1$ which has
+parameters $\theta_{M1}$, and a model $M_2$ which has parameters $\theta_{M2}$.
+For example, imagine we would like to model the density of an observed
+distribution of points in one dimension.  
+$M_1$ might be a model in which our data is fit by a single
+Gaussian: in this case the model parameters are $\theta_{M1} = \{\mu, \sigma\}$,
+where $\mu$ is the mean of the distribution and $\sigma$ is the width of the
+distribution.  $M_2$ might be a model in which our data is fit by two
+Gaussians: in the model parameters are
+$\theta_{M2} = \{\mu_1,\sigma_1,\mu_2,\sigma_2,w_{12}\}$ where $\mu_i,\sigma_i$
+gives the mean and width of each Gaussian component, and $w_{12}$ gives the
+relative weight of the two components. Notice that we have explicity
+labeled the model parameters with the model name $M_1$ or $M_2$ as a reminder
+that different models may have varying numbers of parameters.
+
+Answering the question of which model best fits the data is a problem known
+as {\it model selection}.  Two approaches are commonly used for this sort
+of problem: the Bayesian approach of odds ratios and the frequentist approach
+of cross-validation based on maximum likelihood
+(should we mention AIC/BIC as well? Other cost functions?).
+The frequentist approach is often the most simple: the cross-validation of
+maximum likelihood is an optimization problem, which can be solved quickly
+under most circumstances even in high-dimensional parameter spaces.
+The Bayesian approach is in some sense the most rigorous: it allows for the
+specific inclusion of prior information, and for the recovery of the full
+posterior probability for each model.  This approach is not without its
+weaknesses, however.  The Bayesian formalism is fundamentally a problem in
+integration, and integration is much less efficient than optimization in
+high dimensions.  Additionally, the Bayesian approach requires the
+specification of a prior on the models: in cases where no actual prior
+information exists, this specification becomes difficult, and even
+so-called {\it uninformative priors} can have an effect on the final
+result [ref?].
+
+Nevertheless, both approaches are similar in that they can be shown to
+have {\it predictive power}.  Because of this, we might expect them to
+be related.  The goal of this work is to explicitly show the relationship
+between the two methodologies, the assumptions used in relating the two,
+and offer advice for deciding {\it a priori} when the faster frequentist
+approach is a good approximation of the more rigorous but difficulty-laden
+Bayesian approach.
+
+\section{Frequentist Model Selection: Cross-Validation}
+Cross-validation is a well-known approach in frequentism.  In the simplest
+version of cross-validation, the data $D = \{d_i\}_{i=1}^n$
+is divided into two samples:
+the {\it training} data \Dtr used to train the model, and the
+{\it cross-validation} data \Dcv which is used to validate the trained
+model. It is important that these two samples are
+non-overlapping and independent: in most cases this can be ensured by
+allowing each observation to appear in just one of the sets, as in the
+scheme aove.\footnote{cross-validation of correlated observations are
+an interesting problem, but one we won't address in this paper [ref?].}.
+To ensure independence, we will divide the data as follows: for $n$
+observations we randomly choose $n_{tr}$ of the observations
+as a training sample, and use the remainder as the cross-validation set.
+Without loss of generality we can re-order the data so that the
+the training data is given by $\Dtr = \{d_i\}_{i=1}^{n_{tr}}$,
+and the cross-validation data is given by $\Dcv = \{d_i\}_{i=n_{tr}+1}^{n}$.
+
+As mentioned above, cross-validation is a two-step process:
+for each potential model $M$, the
+training data \Dtr is used to construct the data likelihood as a function
+of the vector of model parameters $\theta_M$.  This likelihood is of the form
 \begin{equation}
-  P(M|D,I) = \frac{P(D|M,I)P(M|I)}{P(D|I)}
+  \label{eq:tr_likelihood}
+  P(\Dtr|M, \theta_M, I) \propto \prod_{i=1}^{n_{tr}}P(d_i|M, \theta_M, I).
 \end{equation}
-where $M$ is the model (not the particular parameters, but the model itself),
-$D$ is the observed data, and $I$ is any additional information.
-In a Bayesian setting, model selection can be accomplished through the odds
-ratio
+The terms $P(d_i|M, \theta_M, I)$ specify the probability of obtaining a
+particular observation $d_i$ given our model described by $M$ and $\theta_M$:
+this probability can be thought of as a limiting frequency of results within
+some small range around the particular values $d_i$: thus this is a
+``frequentist'' approach.
+Maximizing the likelihood in with respect to the model parameters $\theta_M$
+in \eqn{tr_likelihood} gives the {\it maximum likelihood estimate} (MLE)
+of the model parameters, which we call
 \begin{equation}
-  O_{21} = \frac{P(M_2|D,I)}{P(M_1|D,I)}
+  \hat{\theta}_M^{max} \leftarrow \arg\max_{\theta_M} P(\Dtr|M, \theta_M, I).
 \end{equation}
+Based on this MLE, we compute the cross-validation score, which is the
+cross-validation likelihood for the MLE parameter estimate:
+\begin{equation}
+  L_{CV}(M) = P(\Dcv|M, \hat{\theta}_M^{max}, I)
+\end{equation}
+the model $M$ with the largest cross-validation likelihood $L_{CV}(M)$ is the
+best-fit model chosen by the cross-validation procedure.
+
+This approach can be very powerful, as well as computationally efficient.
+However, by generalizing the notion of probability, we can approach this
+from the Bayesian perspective, and gain further insight into the assumptions
+made by the cross-validation approach.
+
+\section{Bayesian Model Selection: the Odds Ratio}
+The Bayesian approach is slightly different.  It seeks to compute the
+{\it posterior model probability} $P(M|D,I)$, which by Bayes' theorem
+can be expressed
+\begin{equation}
+  \label{eq:bayes_theorem}
+  P(M|D,I) = \frac{P(D|M,I)P(M|I)}{P(D|I)}.
+\end{equation}
+The first term in the numerator is known as the {\it evidence},
+and is expressible as an integral over the likelihood used
+in cross-validation (see below).
+The second term in the numerator is known
+as the {\it prior}, and encodes any prior knowledge constraining the model.
+The term in the denominator is a normalization, and is usually not
+computed explicitly.
+
+The expression in \eqn{bayes_theorem} follows directly from the basic axioms
+of probability, but note that
+we have subtley changed the meaning of our terms here:
+in the previous section, the probability
+$P(\cdot)$ could be thought of as the limiting frequency of observed events.
+Here, we consider the probabilities of {\it models}, which in reality are
+either true or false.  Our former approach to probability is not applicable!
+
+This underlies the fundamental difference between Bayesianism and frequentism:
+in the Bayesian approach, we expand the definition of probability to include
+probabilistic statements about our own knowledge.  When we write an expression
+of the probability of a model given some data, $P(M|D)$, it quantifies the
+extent of our knowledge about the model, or in general the particular
+parameters within the model.
+
+Bayesian model selection involves the comparison between two models $M_1$
+and $M_2$ given their posterior probabilities.  It is convenient to express
+this comparison in terms of the {\it odds ratio}, given by
+\begin{equation}
+  O_{21} = \frac{P(M_2|D,I)}{P(M_1|D,I)}.
+\end{equation}
+Comparing to
 The nice thing here is that the denominator (which is hard to compute) cancels
 leaving
 \begin{equation}
   O_{21} = \frac{P(D|M_1,I)}{P(D|M_2,I)}\frac{P(M_1|I)}{P(M_2|I)}
 \end{equation}
 The first quotient is known as the {\it Bayes Factor}, and the second is the
-ratio of the model priors.  The $P(D|M,I)$ terms are the {\it Evidence},
-and are computed via an integral over all possible model parameters:
-\begin{equation}
-  P(D|M, I) = \int \dd^N\theta_M P(D|M, I, \theta_M)P(\theta_M|M, I)
-\end{equation}
-We've explicitly labeled the model parameters with $M$ to remind the reader
-that $\theta_M$ are model parameters {\it within the model} $M$.
-These model parameters $\theta_M$ can in cases of interest be
-very high-dimensional:
-this is why the Bayesian model selection problem is computationally difficult.
+ratio of the model priors.
 
-\subsection{Relating this to CV}
-Let's assume we're doing single-fold cross-validation, so that the data is
-split into a single training set \Dtr and a single cross-valitation set
-\Dcv, with no overlap.  Because of the independence of \Dtr and \Dcv, we can
-write $P(D|\cdot) = P(\Dtr,\Dcv|\cdot) = P(\Dtr|\cdot)P(\Dcv|\cdot)$, and
-we have
+Computing the odds ratio involves computation of the evidence $P(D|M,I)$
+for each model.  This evidence is difficult to compute because it expresses
+our degree of knowledge of the truch of model $M$ -- not for any
+particular choice of model parameters,
+but integrated over {\it all} possible combinations of parameters allowed
+by the model.  We can express this integral explicitly in terms of the
+likelihood used in the frequentist approach:
 \begin{equation}
-  P(D|M,I) = \int \dd^N\theta_M P(\Dtr|M, I, \theta_M) P(\Dcv|M,I,\theta_M)P(\theta_M|M,I)
+  \label{eq:evidence_integral}
+  P(D|M, I) = \int \dd^{N_M}\theta_M P(D|M, I, \theta_M)P(\theta_M|M, I),
+\end{equation}
+where $N_M$ is the number of parameters in model $M$.
+
+This integral illustrates the two practical difficulties of the Bayesian
+approach: first, the prior term $P(\theta_M|M,I)$ must be specified, and
+even so-called ``uninformative'' priors can affect the result, especially
+in the case of model comparison.  Second, the integral must be computed
+over all $N_M$ dimensions.
+As the number of dimensions grows, the computational cost of this step
+can become prohibitively expensive.
+
+\section{Comparing Bayesianism and Frequentism}
+Comparing the two approaches, we see that the likelihood plays a central
+role in both Bayesian and frequentist model selection.  The difference
+is that in frequentism we {\it optimize} the likelihood, while in
+Bayesianism we {\it integrate} the likelihood.  The relationship between
+these approaches can be seen as follows.
+
+Assume we're using single-fold cross-validation as described above, where
+the data $D$ is split into a single training set \Dtr and a single
+cross-valitation set \Dcv, with no overlap.
+Because of the independence of \Dtr and \Dcv, we can write
+\begin{eqnarray}
+  P(D|I) &=& P(\Dtr,\Dcv|I)\\
+             &=& P(\Dtr|I)P(\Dcv|I).
+\end{eqnarray}
+Using this identity, the evidence in \eqn{evidence_integral} can be expressed
+\begin{equation}
+  P(D|M,I) = \int \dd^N\theta_M P(\Dtr|M, I, \theta_M)
+  P(\Dcv|M,I,\theta_M)P(\theta_M|M,I)
 \end{equation}
 The terms in this integral are straightforward to understand:
 \begin{description}
@@ -77,22 +220,22 @@ The terms in this integral are straightforward to understand:
     implicitly assumed to be constant in the cross-validation approach.
 \end{description}
 
-In order to recover the Cross-validation results within the Bayesian approach,
+In order to recover the cross-validation results within the Bayesian approach,
 we can start by assuming the training likelihood is narrowly peaked around its
 maximum likelihood value.  We can write this as
 \begin{equation}
-  P(\Dtr|M, I, \theta_M) \approx \delta(\theta_M - \hat{\theta}^{max}_M
+  P(\Dtr|M, I, \theta_M) \approx \delta(\theta_M - \hat{\theta}^{max}_M)
 \end{equation}
 Putting in this assumption yields
 \begin{equation}
-  P(D|M,I) = P(\Dcv|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
+  P(D|M,I) \approx P(\Dcv|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
 \end{equation}
 Returning to the Bayesian odds ratio, we find
 \begin{equation}
-  O_{21} = \frac{P(\Dcv|\hat{\theta}^{max}_{M1},M_1,I)}
-               {P(\Dcv|\hat{\theta}^{max}_{M2},M_2,I)}
-          \frac{P(\hat{\theta}^{max}_{M1},M_1|I)}
-               {P(\hat{\theta}^{max}_{M2},M_2|I)}
+  O_{21} \approx \frac{P(\Dcv|\hat{\theta}^{max}_{M1},M_1,I)}
+                     {P(\Dcv|\hat{\theta}^{max}_{M2},M_2,I)}
+                \frac{P(\hat{\theta}^{max}_{M1},M_1|I)}
+                     {P(\hat{\theta}^{max}_{M2},M_2|I)}
 \end{equation}
 where we have used the identity $P(\theta|M,I)P(M|I) = P(M,\theta|I)$.
 This looks very similar to the Bayesian odds ratio, except for a few
@@ -105,8 +248,8 @@ subtle changes:
     with the prior for a particular choice of the model,
     $P(\hat{\theta}^{max}_{M},M|I)$.
 \end{itemize}
-If we assume uninformative priors such that the second quotient is 1, then
-we recover the cross-validation model.
+If we assume uninformative priors such that the second quotient is unity,
+then we recover the exact form of the cross-validation model.
 This exercise has the benefit of explicitly showing which assumptions the
 cross-validation approach makes as compared to the Bayesian approach.
 
@@ -136,10 +279,19 @@ We should summarize these assumptions here:
   \item The {\it model prior} for different models is approximately equal
     (that is, the model prior is uninformative).
 \end{enumerate}
-When these assumptions are met, the cross-validation and bayesian approaches
+When these assumptions are met, the cross-validation and Bayesian approaches
 will lead to similar results.
 
-\section{Hogg's Equations}
+[think about some examples]
+
+\section{Quantifying the Approximation}
+In what situation can the frequentist approach be used as a substitute for
+the Bayesian formulation?
+
+\section{Examples}
+We should come up with some good ones.
+
+\section{Extension to Other CV Schemes}
 
 \begin{eqnarray}
 p(D\given\theta,H) &=& \prod_{n=1}^N p(D_n\given\theta,H)
