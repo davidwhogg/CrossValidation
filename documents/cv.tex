@@ -7,7 +7,7 @@
 \newcommand{\dd}{\mathrm{d}}
 
 \newcommand{\Dtr}{\ensuremath{D^{\rm TR}}}
-\newcommand{\Dcv}{\ensuremath{D^{\rm CV}}}
+\newcommand{\Dva}{\ensuremath{D^{\rm V}}}
 \newcommand{\eqn}[1]{eq.~\ref{eq:#1}}
 
 \begin{document}
@@ -74,8 +74,8 @@ Bayesian approach.
 Cross-validation is a well-known approach in frequentism.  In the simplest
 version of cross-validation, the data $D = \{d_i\}_{i=1}^n$
 is divided into two samples:
-the {\it training} data \Dtr used to train the model, and the
-{\it cross-validation} data \Dcv which is used to validate the trained
+the {\it training} data \Dtr{} used to train the model, and the
+{\it validation} data \Dva{} which is used to validate the trained
 model. It is important that these two samples are
 non-overlapping and independent: in most cases this can be ensured by
 allowing each observation to appear in just one of the sets, as in the
@@ -83,14 +83,14 @@ scheme aove.\footnote{cross-validation of correlated observations are
 an interesting problem, but one we won't address in this paper [ref?].}.
 To ensure independence, we will divide the data as follows: for $n$
 observations we randomly choose $n_{tr}$ of the observations
-as a training sample, and use the remainder as the cross-validation set.
+as a training sample, and use the remainder as the validation set.
 Without loss of generality we can re-order the data so that the
 the training data is given by $\Dtr = \{d_i\}_{i=1}^{n_{tr}}$,
-and the cross-validation data is given by $\Dcv = \{d_i\}_{i=n_{tr}+1}^{n}$.
+and the validation data is given by $\Dva = \{d_i\}_{i=n_{tr}+1}^{n}$.
 
 As mentioned above, cross-validation is a two-step process:
 for each potential model $M$, the
-training data \Dtr is used to construct the data likelihood as a function
+training data \Dtr{} is used to construct the data likelihood as a function
 of the vector of model parameters $\theta_M$.  This likelihood is of the form
 \begin{equation}
   \label{eq:tr_likelihood}
@@ -110,9 +110,9 @@ of the model parameters, which we call
 Based on this MLE, we compute the cross-validation score, which is the
 cross-validation likelihood for the MLE parameter estimate:
 \begin{equation}
-  L_{CV}(M) = P(\Dcv|M, \hat{\theta}_M^{max}, I)
+  L_{CV}(M) = P(\Dva|M, \hat{\theta}_M^{max}, I)
 \end{equation}
-the model $M$ with the largest cross-validation likelihood $L_{CV}(M)$ is the
+the model $M$ with the largest validation likelihood $L_{V}(M)$ is the
 best-fit model chosen by the cross-validation procedure.
 
 This approach can be very powerful, as well as computationally efficient.
@@ -195,24 +195,24 @@ Bayesianism we {\it integrate} the likelihood.  The relationship between
 these approaches can be seen as follows.
 
 Assume we're using single-fold cross-validation as described above, where
-the data $D$ is split into a single training set \Dtr and a single
-cross-valitation set \Dcv, with no overlap.
-Because of the independence of \Dtr and \Dcv, we can write
+the data $D$ is split into a single training set \Dtr{} and a single
+valitation set \Dva{}, with no overlap.
+Because of the independence of \Dtr{} and \Dva{}, we can write
 \begin{eqnarray}
-  P(D|I) &=& P(\Dtr,\Dcv|I)\\
-             &=& P(\Dtr|I)P(\Dcv|I).
+  P(D|I) &=& P(\Dtr,\Dva|I)\\
+             &=& P(\Dtr|I)P(\Dva|I).
 \end{eqnarray}
 Using this identity, the evidence in \eqn{evidence_integral} can be expressed
 \begin{equation}
   P(D|M,I) = \int \dd^N\theta_M P(\Dtr|M, I, \theta_M)
-  P(\Dcv|M,I,\theta_M)P(\theta_M|M,I)
+  P(\Dva|M,I,\theta_M)P(\theta_M|M,I)
 \end{equation}
 The terms in this integral are straightforward to understand:
 \begin{description}
   \item[$P(\Dtr|M, I, \theta_M)$] is the likelihood of the training data.
     In the cross-validation approach, the parameters $\hat{\theta}^{max}_M$ which
     maximize the likelihood are determined for each possible model $M$.
-  \item[$P(\Dcv|M, I, \theta_M)$] is the likelihood of the cross-validation
+  \item[$P(\Dva|M, I, \theta_M)$] is the likelihood of the validation
     data.  In the cross-validation approach, this is maximized for $M$,
     for parameters $\theta_M = \hat{\theta}^{max}_M$ at their fixed, to choose
     the model $M$.
@@ -228,12 +228,12 @@ maximum likelihood value.  We can write this as
 \end{equation}
 Putting in this assumption yields
 \begin{equation}
-  P(D|M,I) \approx P(\Dcv|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
+  P(D|M,I) \approx P(\Dva|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
 \end{equation}
 Returning to the Bayesian odds ratio, we find
 \begin{equation}
-  O_{21} \approx \frac{P(\Dcv|\hat{\theta}^{max}_{M1},M_1,I)}
-                     {P(\Dcv|\hat{\theta}^{max}_{M2},M_2,I)}
+  O_{21} \approx \frac{P(\Dva|\hat{\theta}^{max}_{M1},M_1,I)}
+                     {P(\Dva|\hat{\theta}^{max}_{M2},M_2,I)}
                 \frac{P(\hat{\theta}^{max}_{M1},M_1|I)}
                      {P(\hat{\theta}^{max}_{M2},M_2|I)}
 \end{equation}
@@ -260,7 +260,7 @@ the model prior and cross-validation likelihood are slowly varying across
 the significant portion of the training likelihood.  Though this is a strong
 assumption, it is accurate (at least approximately) in many cases of interest:
 an uninformative prior will be (by definition) much wider than the training
-likelihood.  Additionally, because the cross-validation set is often much
+likelihood.  Additionally, because the validation set is often much
 smaller than the training set, it will give a much weaker constraint on the
 model.  For this reason, it is safe to assume that the cross-validation
 likelihood is wider than the training likelihood.
