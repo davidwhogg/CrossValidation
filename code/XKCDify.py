@@ -11,7 +11,7 @@ The idea for this comes from work by Damon McDougall
   http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net/msg25499.html
 """
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import interpolate, signal
 import matplotlib.font_manager as fm
 
@@ -103,6 +103,7 @@ def xkcd_line(x, y, xlim=None, ylim=None,
 def XKCDify(ax, mag=1.0,
             f1=50, f2=0.01, f3=15,
             bgcolor='w',
+            add_line_bg=True,
             xaxis_loc=None,
             yaxis_loc=None,
             xaxis_arrow='+',
@@ -159,10 +160,10 @@ def XKCDify(ax, mag=1.0,
         yaxis_loc = xlim[0]
 
     # Draw axes
-    xaxis = pl.Line2D([xax_lim[0], xax_lim[1]], [xaxis_loc, xaxis_loc],
-                      linestyle='-', color='k')
-    yaxis = pl.Line2D([yaxis_loc, yaxis_loc], [yax_lim[0], yax_lim[1]],
-                      linestyle='-', color='k')
+    xaxis = plt.Line2D([xax_lim[0], xax_lim[1]], [xaxis_loc, xaxis_loc],
+                       linestyle='-', color='k')
+    yaxis = plt.Line2D([yaxis_loc, yaxis_loc], [yax_lim[0], yax_lim[1]],
+                       linestyle='-', color='k')
 
     # Label axes3, 0.5, 'hello', fontsize=14)
     ax.text(xax_lim[1], xaxis_loc - 0.02 * yspan, ax.get_xlabel(),
@@ -193,9 +194,9 @@ def XKCDify(ax, mag=1.0,
         line.set_data(x_int, y_int)
 
         # don't add background line for axes
-        if (line is not xaxis) and (line is not yaxis):
-            line_bg = pl.Line2D(x_int, y_int, color=bgcolor,
-                                linewidth=8 * lw)
+        if add_line_bg and (line is not xaxis) and (line is not yaxis):
+            line_bg = plt.Line2D(x_int, y_int, color=bgcolor,
+                                 linewidth=8 * lw)
 
             ax.add_line(line_bg)
         ax.add_line(line)
@@ -238,11 +239,11 @@ def XKCDify(ax, mag=1.0,
         leg.set_frame_on(False)
         
         for child in leg.get_children():
-            if isinstance(child, pl.Line2D):
+            if isinstance(child, plt.Line2D):
                 x, y = child.get_data()
                 child.set_data(xkcd_line(x, y, mag=10, f1=100, f2=0.001))
                 child.set_linewidth(2 * child.get_linewidth())
-            if isinstance(child, pl.Text):
+            if isinstance(child, plt.Text):
                 child.set_fontproperties(prop)
     
     # Set the axis limits
@@ -261,3 +262,38 @@ def XKCDify(ax, mag=1.0,
         ax.set_position([0, 0, 1, 1])
     
     return ax
+
+
+def xkcd_plot(x, y, ax, xkcd_kwargs, plot_kwargs):
+    if ax is None:
+        ax = plt.gca()
+    x, y = xkcd_line(x, y, **xkcd_kwargs)
+    return ax.plot(x, y, **plot_kwargs)
+
+
+def xkcd_fill(x, y, ax, xkcd_kwargs, plot_kwargs):
+    if ax is None:
+        ax = plt.gca()
+    x, y = xkcd_line(x, y, **xkcd_kwargs)
+    ax.fill(x, y, **plot_kwargs)
+
+
+def xkcd_scatter(x, y, ax, size_x, size_y, fill_args):
+    if size_x is None:
+        size_x = 0.02 * (x.max() - x.min())
+    if size_y is None:
+        size_y = 0.02 * (y.max() - y.min())
+
+    from scipy.stats import norm
+    t = np.arange(100)
+    f = norm.pdf(t, 50, 10)
+
+    t = np.linspace(0, 2 * np.pi, 100)
+    x_circ = size_x * np.cos(t)
+    y_circ = size_y * np.sin(t)
+
+    for (xi, yi) in zip(x, y):
+        r = 5 * np.random.normal(0, 0.1, 100)
+        r = np.fft.ifft(np.fft.fft(r) * np.fft.fft(f)).real / np.sum(f)
+        ax.fill((1 + r) * x_circ + xi,
+                (1 + r) * y_circ + yi, **fill_args)

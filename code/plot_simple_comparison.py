@@ -128,6 +128,29 @@ print model_selection_bayes(x, y, [0, 0], [1, 3])
 print np.log(1000)
 
 fig, ax = plt.subplots()
-ax.scatter(x, y)
+#ax.scatter(x, y, fc='gray')
+from XKCDify import XKCDify, xkcd_scatter
+
+xkcd_scatter(x, y, ax, 0.1, 0.066,
+             fill_args=dict(ec='k', lw=1, fc='#AAAADD'))
+
+mu = np.mean(y)
+theta = np.polyfit(x, y, 1)
+
+x = np.linspace(-2, 12, 10)
+ax.plot(x, mu * np.ones_like(x), '--k')
+ax.plot(x, theta[0] * x + theta[1], '-k')
+
+ax.text(11, -2.2, 'X', ha='center', va='top')
+ax.text(-2.2, 4.5, 'Y', ha='right', va='center')
+
+ax.text(11, 1.8, 'Model 1', ha='left', va='center')
+ax.text(11, 4.3, 'Model 2', ha='left', va='center')
+
+ax.set_xlim(-2, 12)
+ax.set_ylim(-2, 5)
+
+XKCDify(ax, expand_axes=True, add_line_bg=False)
+
 plt.show()
 

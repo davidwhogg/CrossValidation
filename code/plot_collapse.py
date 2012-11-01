@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from XKCDify import xkcd_line, XKCDify
+from XKCDify import xkcd_line, XKCDify, xkcd_fill, xkcd_plot
 
 
 fig, ax = plt.subplots(1, 2, figsize=(8, 4), facecolor='w',
@@ -21,12 +21,11 @@ np.random.seed(0)
 d1 = np.dot(R, d)
 d2 = 0.5 * d1
 
-xkcd_args = dict(f2=0.01, f3=10, mag=5,
-                 xlim=(-7, 7), ylim=(-4, 4))
-ax[0].fill(*xkcd_line(d1[0], d1[1], **xkcd_args),
-           ec='k', fc='gray', lw=2, alpha=0.2)
-ax[0].fill(*xkcd_line(d2[0], d2[1], **xkcd_args),
-           ec='k', fc='gray', lw=2, alpha=0.2)
+xkcd_args = dict(f2=0.01, f3=10, mag=5, xlim=(-7, 7), ylim=(-4, 4))
+fill_args = dict(ec='k', fc='gray', lw=2, alpha=0.2)
+
+xkcd_fill(d1[0], d1[1], ax[0], xkcd_args, fill_args)
+xkcd_fill(d2[0], d2[1], ax[0], xkcd_args, fill_args)
 
 ax[0].set_title('original')
 
@@ -36,12 +35,10 @@ d1 = np.vstack([0.3 * np.sin(t),
                 3.0 * np.cos(t)])
 d2 = 0.5 * d1
 xkcd_args = dict(f2=0.01, mag=1, xlim=(-7, 7), ylim=(-4, 4))
+fill_args = dict(ec='k', fc='gray', lw=2, alpha=0.2)
 
-x1, x2 = xkcd_line(d1[0] + 1, d1[1] + 1, **xkcd_args)
-ax[1].fill(x1, x2, ec='k', fc='gray', lw=2, alpha=0.2)
-
-x1, x2 = xkcd_line(d2[0] + 1, d2[1] + 1, **xkcd_args)
-ax[1].fill(x1, x2, ec='k', fc='gray', lw=2, alpha=0.2)
+xkcd_fill(d1[0] + 1, d1[1] + 1, ax[1], xkcd_args, fill_args)
+xkcd_fill(d2[0] + 1, d2[1] + 1, ax[1], xkcd_args, fill_args)
 
 ax[1].set_title('collapsed')
 
@@ -81,9 +78,9 @@ for ax_i in ax:
         sup.set_size(10)
 
     xkcd_args = dict(f2=0.01, f3=10, mag=1, xlim=(-7, 7), ylim=(-4, 4))
-    ax_i.plot(*xkcd_line((-7, 1), (1, 1), **xkcd_args),
-              ls='--', c='k', lw=2)
-    ax_i.plot(*xkcd_line((1, 1), (-4, 1), **xkcd_args),
-              ls='--', c='k', lw=2)
+    plot_args = dict(ls='--', c='k', lw=2)
+
+    xkcd_plot([-7, 1], [1, 1], ax_i, xkcd_args, plot_args)
+    xkcd_plot([1, 1], [-4, 1], ax_i, xkcd_args, plot_args)
 
 plt.show()

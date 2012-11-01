@@ -3,6 +3,9 @@
 \usepackage{graphicx}
 \graphicspath{{figs/}}
 
+\usepackage{color}
+\newcommand{\comment}[1]{{\color{red} [#1]}}
+
 \newcommand{\given}{\,|\,}
 \newcommand{\setof}[1]{\left\{{#1}\right\}}
 \newcommand{\train}{\mathrm{train}}
@@ -11,36 +14,53 @@
 
 \newcommand{\Dtr}{\ensuremath{D^{\rm TR}}}
 \newcommand{\Dva}{\ensuremath{D^{\rm V}}}
+\newcommand{\Ntr}{\ensuremath{N^{\rm TR}}}
+\newcommand{\Nva}{\ensuremath{N^{\rm V}}}
+
 \newcommand{\eqn}[1]{eq.~(\ref{eq:#1})}
 \newcommand{\fig}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\paper}{paper}
 
 \title{Really Good Paper Title}
+\author{}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-  Really really good abstract
+  Bayesian confidence estimation and cross-validation are two possible
+  approaches to the problem of statistical model selection.  The Bayesian
+  approach has a sound basis in Bayesian probability theory, but is
+  computationally difficult and highly sensitive to priors which may or may
+  not be known.  The cross-validation approach is simpler to compute, but
+  has a more heuristic basis.  In this \paper{} we show that there is an
+  approximate quantitiative relationship between these two approaches to
+  model selection, derive test statistics which evaluate when the
+  computationally efficient cross-validation approach can be used in place
+  of the difficulty-prone Bayesian approach.
 \end{abstract}
 
-\section{Outline}
-\begin{itemize}
-\item Bayesianism is a solid approach, but the Bayes integral is hard \&
-  involves strong assumptions. {\bf Multi-dimensional integration
-    is generally expensive}
-\item CV is easy and has no -- or very few -- free parameters (we'll have to
-  think about how choice of CV scheme affects this)
-  {\bf Multi-dimensional optimization is generally cheaper}.
-\item Both approaches have {\it predictive power}, and for this reason we
-  should expect them to be related.
-\item Main subject of the paper: how can we determine {\it a priori} when the
-  two will give similar results?
-\item (Aside on LTFDFCF \& model selection?  Or leave for a future paper...)
-\end{itemize}
+%\section{Outline}
+%\begin{itemize}
+%\item Bayesianism is a solid approach, but the Bayes integral is hard \&
+%  involves strong assumptions. {\bf Multi-dimensional integration
+%    is generally expensive}
+%\item CV is easy and has no -- or very few -- free parameters (we'll have to
+%  think about how choice of CV scheme affects this)
+%  {\bf Multi-dimensional optimization is generally cheaper}.
+%\item Both approaches have {\it predictive power}, and for this reason we
+%  should expect them to be related.
+%\item Main subject of the paper: how can we determine {\it a priori} when the
+%  two will give similar results?
+%\item (Aside on LTFDFCF \& model selection?  Or leave for a future paper...)
+%\end{itemize}
 
 \section{Model Selection}
-In model selection, we want to choose between a model $M_1$ which has
+Model selection is the process of using data to decide between two models.
+In general we'll distinguish between a model $M_1$ which has
 parameters $\theta_{M1}$, and a model $M_2$ which has parameters $\theta_{M2}$.
+The models can have multiple parameters:
+$\theta_M$ is in general a vector or set of model parameters.
 For example, imagine we would like to model the density of an observed
 distribution of points in one dimension.  
 $M_1$ might be a model in which our data is fit by a single
@@ -57,8 +77,8 @@ that different models may have varying numbers of parameters.
 Answering the question of which model best fits the data is a problem known
 as {\it model selection}.  Two approaches are commonly used for this sort
 of problem: the Bayesian approach of odds ratios and the frequentist approach
-of cross-validation based on maximum likelihood
-(should we mention AIC/BIC as well? Other cost functions?).
+of cross-validation based on maximum likelihood.
+\comment{should we mention AIC/BIC as well? Other cost functions?}
 The frequentist approach is often the most simple: the cross-validation of
 maximum likelihood is an optimization problem, which can be solved quickly
 under most circumstances even in high-dimensional parameter spaces.
@@ -71,7 +91,7 @@ high dimensions.  Additionally, the Bayesian approach requires the
 specification of a prior on the models: in cases where no actual prior
 information exists, this specification becomes difficult, and even
 so-called {\it uninformative priors} can have an effect on the final
-result [ref?].
+result \comment{ref?}.
 
 Nevertheless, both approaches are similar in that they can be shown to
 have {\it predictive power}.  Because of this, we might expect them to
@@ -83,26 +103,28 @@ Bayesian approach.
 
 \section{Frequentist Model Selection: Cross-Validation}
 Cross-validation is a well-known approach in frequentism.  In the simplest
-version of cross-validation, the data $D = \{d_i\}_{i=1}^n$
+version of cross-validation, the data $D = \{d_n\}_{n=1}^N$
 is divided into two samples:
 the {\it training} data \Dtr{} used to train the model, and the
 {\it validation} data \Dva{} which is used to validate the trained
 model. It is important that these two samples are
 non-overlapping and independent: in most cases this can be ensured by
-allowing each observation to appear in just one of the sets, as in the
-scheme aove.\footnote{cross-validation of correlated observations are
-an interesting problem, but one we won't address in this paper [ref?].}.
-To ensure independence, we will divide the data as follows: for $n$
-observations we randomly choose $n_{tr}$ of the observations
-as a training sample, and use the remainder as the validation set.
+allowing each observation to appear in just one of the sets\footnote{
+ cross-validation of correlated observations are
+ an interesting problem, but one we won't address in this paper
+ \comment{ref?}.}.
+To ensure independence, we will divide the data as follows: for $N$
+observations we randomly choose \Ntr of the observations
+as a training sample, and use the remaining $\Nva = N - \Ntr$
+points as the validation set.
 Without loss of generality we can re-order the data so that the
 the training data is given by
 \begin{equation}
-  \Dtr = \{d_i\}_{i=1}^{n_{tr}},
+  \Dtr = \{d_n\}_{n=1}^{\Ntr},
 \end{equation}
 and the validation data is given by
 \begin{equation}
-  \Dva = \{d_i\}_{i=n_{tr}+1}^{n}.
+  \Dva = \{d_n\}_{n=\Ntr+1}^{N}.
 \end{equation}
 
 As mentioned above, cross-validation is a two-step process:
@@ -111,12 +133,12 @@ training data \Dtr{} is used to construct the data likelihood as a function
 of the vector of model parameters $\theta_M$.  This likelihood is of the form
 \begin{equation}
   \label{eq:tr_likelihood}
-  P(\Dtr|M, \theta_M, I) \propto \prod_{i=1}^{n_{tr}}P(d_i|M, \theta_M, I).
+  P(\Dtr|M, \theta_M, I) \propto \prod_{n=1}^{N^{\rm TR}}P(d_n|M, \theta_M, I).
 \end{equation}
-The terms $P(d_i|M, \theta_M, I)$ specify the probability of obtaining a
-particular observation $d_i$ given our model described by $M$ and $\theta_M$:
+The terms $P(d_n|M, \theta_M, I)$ specify the probability of obtaining a
+particular observation $d_n$ given our model described by $M$ and $\theta_M$:
 this probability can be thought of as a limiting frequency of results within
-some small range around the particular values $d_i$: thus this is a
+some small range around the particular values $d_n$: thus this is a
 ``frequentist'' approach.
 Maximizing the likelihood in with respect to the model parameters $\theta_M$
 in \eqn{tr_likelihood} gives the {\it maximum likelihood estimate} (MLE)
@@ -146,8 +168,10 @@ can be expressed
   \label{eq:bayes_theorem}
   P(M|D,I) = \frac{P(D|M,I)P(M|I)}{P(D|I)}.
 \end{equation}
-The first term in the numerator is known as the {\it evidence},
-and is expressible as an integral over the likelihood used
+The first term in the numerator is the {\it Bayes integral},\footnote{
+Often, especially in the statistical literature,
+the Bayes integral is confusingly called the {\it evidence}.}
+as it is expressible as an integral over the likelihood used
 in cross-validation (see below).
 The second term in the numerator is known
 as the {\it prior}, and encodes any prior knowledge constraining the model.
@@ -159,8 +183,9 @@ of probability, but note that
 we have subtley changed the meaning of our terms here:
 in the previous section, the probability
 $P(\cdot)$ could be thought of as the limiting frequency of observed events.
-Here, we consider the probabilities of {\it models}, which in reality are
-either true or false.  Our former approach to probability is not applicable!
+Here, we consider the probabilities of {\it models}, which cannot be evaluated
+in these frequentist terms.
+Our former approach to probability is not applicable!
 
 This underlies the fundamental difference between Bayesianism and frequentism:
 in the Bayesian approach, we expand the definition of probability to include
@@ -176,7 +201,8 @@ this comparison in terms of the {\it odds ratio}, given by
   \label{eq:odds_ratio}
   O_{21} = \frac{P(M_2|D,I)}{P(M_1|D,I)}.
 \end{equation}
-Comparing to
+The two model posteriors can be rewritten in terms of Bayes' rule using
+\comment{XXX: ended here}
 The nice thing here is that the denominator (which is hard to compute) cancels
 leaving
 \begin{equation}
