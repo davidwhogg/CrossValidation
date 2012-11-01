@@ -1,3 +1,5 @@
+References
+----------
 Berger, Brown, & Wolpert
 This shows how conditioned frequentist model selection can give the same
 results as Bayesian with certain conditioners
@@ -5,3 +7,8 @@ http://projecteuclid.org/DPubS?service=UI&version=1.0&verb=Display&handle=euclid
 
 JMLR model selection special issue (first paper especially)
 http://jmlr.csail.mit.edu/papers/topic/model_selection.html 
+
+
+Examples
+--------
+visualize 1 vs 2 Gaussians

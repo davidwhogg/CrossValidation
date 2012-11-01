@@ -1,5 +1,8 @@
 \documentclass[12pt]{article}
 
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+
 \newcommand{\given}{\,|\,}
 \newcommand{\setof}[1]{\left\{{#1}\right\}}
 \newcommand{\train}{\mathrm{train}}
@@ -8,9 +11,17 @@
 
 \newcommand{\Dtr}{\ensuremath{D^{\rm TR}}}
 \newcommand{\Dva}{\ensuremath{D^{\rm V}}}
-\newcommand{\eqn}[1]{eq.~\ref{eq:#1}}
+\newcommand{\eqn}[1]{eq.~(\ref{eq:#1})}
+\newcommand{\fig}[1]{Fig.~\ref{fig:#1}}
+
+\title{Really Good Paper Title}
 
 \begin{document}
+\maketitle
+
+\begin{abstract}
+  Really really good abstract
+\end{abstract}
 
 \section{Outline}
 \begin{itemize}
@@ -85,8 +96,14 @@ To ensure independence, we will divide the data as follows: for $n$
 observations we randomly choose $n_{tr}$ of the observations
 as a training sample, and use the remainder as the validation set.
 Without loss of generality we can re-order the data so that the
-the training data is given by $\Dtr = \{d_i\}_{i=1}^{n_{tr}}$,
-and the validation data is given by $\Dva = \{d_i\}_{i=n_{tr}+1}^{n}$.
+the training data is given by
+\begin{equation}
+  \Dtr = \{d_i\}_{i=1}^{n_{tr}},
+\end{equation}
+and the validation data is given by
+\begin{equation}
+  \Dva = \{d_i\}_{i=n_{tr}+1}^{n}.
+\end{equation}
 
 As mentioned above, cross-validation is a two-step process:
 for each potential model $M$, the
@@ -110,6 +127,7 @@ of the model parameters, which we call
 Based on this MLE, we compute the cross-validation score, which is the
 cross-validation likelihood for the MLE parameter estimate:
 \begin{equation}
+  \label{eq:CV_likelihood}
   L_{CV}(M) = P(\Dva|M, \hat{\theta}_M^{max}, I)
 \end{equation}
 the model $M$ with the largest validation likelihood $L_{V}(M)$ is the
@@ -155,6 +173,7 @@ Bayesian model selection involves the comparison between two models $M_1$
 and $M_2$ given their posterior probabilities.  It is convenient to express
 this comparison in terms of the {\it odds ratio}, given by
 \begin{equation}
+  \label{eq:odds_ratio}
   O_{21} = \frac{P(M_2|D,I)}{P(M_1|D,I)}.
 \end{equation}
 Comparing to
@@ -194,93 +213,119 @@ is that in frequentism we {\it optimize} the likelihood, while in
 Bayesianism we {\it integrate} the likelihood.  The relationship between
 these approaches can be seen as follows.
 
-Assume we're using single-fold cross-validation as described above, where
-the data $D$ is split into a single training set \Dtr{} and a single
-valitation set \Dva{}, with no overlap.
-Because of the independence of \Dtr{} and \Dva{}, we can write
-\begin{eqnarray}
-  P(D|I) &=& P(\Dtr,\Dva|I)\\
-             &=& P(\Dtr|I)P(\Dva|I).
-\end{eqnarray}
-Using this identity, the evidence in \eqn{evidence_integral} can be expressed
+We'll start from the point of view of cross-validation.  The spirit of cross
+validation is to maximize the likelihood of the validation data given the
+training data.  In practice this is done through computing the cross-validation
+likelihood using \eqn{CV_likelihood}.  In Bayesian terms, the quantity
+approximated by the cross-validation likelihood can be expressed
 \begin{equation}
-  P(D|M,I) = \int \dd^N\theta_M P(\Dtr|M, I, \theta_M)
-  P(\Dva|M,I,\theta_M)P(\theta_M|M,I)
+  \label{eq:CV_likelihood_2}
+  \widetilde{L}_{CV} = P(\Dva|\Dtr,M,I)
 \end{equation}
-The terms in this integral are straightforward to understand:
+Under what circumstances does $\widetilde{L}_{CV}$ in \eqn{CV_likelihood_2}
+approximate ${L}_{CV}$ in \eqn{CV_likelihood}?  Via probability axioms,
+we can re-express this quantity
+\begin{eqnarray}
+  \label{eq:LCV_derivation}
+  \widetilde{L}_{CV} &=& P(\Dva|\Dtr,M,I)\nonumber\\
+                    &=& \frac{P(\Dva, \Dtr|M,I)}{P(\Dtr|M,I)}\nonumber\\
+                    &=& \frac{\int \dd\theta_M P(\Dva, \Dtr|\theta_M,M,I)
+                                               P(\theta_M|M,I)}
+                             {\int \dd\theta_M P(\Dtr, \theta|M,I)}\nonumber\\
+                    &=& \frac{\int \dd\theta_M P(\Dva|\theta_M,M,I)
+                                               P(\Dtr, \theta_M|M,I)}
+                             {\int \dd\theta_M P(\Dtr, \theta_M|M,I)}.
+\end{eqnarray}
+The terms in the resulting integral are straightforward to understand:
 \begin{description}
-  \item[$P(\Dtr|M, I, \theta_M)$] is the likelihood of the training data.
-    In the cross-validation approach, the parameters $\hat{\theta}^{max}_M$ which
-    maximize the likelihood are determined for each possible model $M$.
   \item[$P(\Dva|M, I, \theta_M)$] is the likelihood of the validation
     data.  In the cross-validation approach, this is maximized for $M$,
     for parameters $\theta_M = \hat{\theta}^{max}_M$ at their fixed, to choose
     the model $M$.
-  \item[$P(\theta_M|M,I)$] is the prior on the model parameters.  This is
-    implicitly assumed to be constant in the cross-validation approach.
+  \item[$P(\Dtr,\theta_M|M, I)$] is the joint probability of the training data
+    and the model parameters.  This term contains the training likelihood used
+    to fix  $\theta_M = \hat{\theta}^{max}_M$ in the first step of the cross
+    validation.  The fact that it appears in both the top and bottom integrals
+    becomes important below.
 \end{description}
 
-In order to recover the cross-validation results within the Bayesian approach,
-we can start by assuming the training likelihood is narrowly peaked around its
-maximum likelihood value.  We can write this as
+If we now make the approximation
 \begin{equation}
-  P(\Dtr|M, I, \theta_M) \approx \delta(\theta_M - \hat{\theta}^{max}_M)
+  \label{eq:CV_approximation}
+  P(\Dtr,\theta_M|M,I) \approx P(\Dtr|M, I)
+                               \delta(\theta_M - \hat{\theta}^{\max}_M),
 \end{equation}
-Putting in this assumption yields
-\begin{equation}
-  P(D|M,I) \approx P(\Dva|\hat{\theta}^{max}_M,M,I)P(\hat{\theta}^{max}_M|M,I)
-\end{equation}
-Returning to the Bayesian odds ratio, we find
-\begin{equation}
-  O_{21} \approx \frac{P(\Dva|\hat{\theta}^{max}_{M1},M_1,I)}
-                     {P(\Dva|\hat{\theta}^{max}_{M2},M_2,I)}
-                \frac{P(\hat{\theta}^{max}_{M1},M_1|I)}
-                     {P(\hat{\theta}^{max}_{M2},M_2|I)}
-\end{equation}
-where we have used the identity $P(\theta|M,I)P(M|I) = P(M,\theta|I)$.
-This looks very similar to the Bayesian odds ratio, except for a few
-subtle changes:
-\begin{itemize}
-  \item We have replaced the full {\it integrated} data likelihood
-    $P(D|M,I)$ with the likelihood at a particular value of the model
-    parameters, $P(D|\hat{\theta}^{max}_{M},M,I)$.
-  \item We have replaced the full {\it integrated} model prior $P(M|I)$
-    with the prior for a particular choice of the model,
-    $P(\hat{\theta}^{max}_{M},M|I)$.
-\end{itemize}
-If we assume uninformative priors such that the second quotient is unity,
-then we recover the exact form of the cross-validation model.
-This exercise has the benefit of explicitly showing which assumptions the
-cross-validation approach makes as compared to the Bayesian approach.
-
-First, in order to approximate the training likelihood as a delta function,
-it must be the case that the training likelihood is very narrow compared to
-both the model prior and the cross-validation likelihood.  In other words,
-the model prior and cross-validation likelihood are slowly varying across
-the significant portion of the training likelihood.  Though this is a strong
-assumption, it is accurate (at least approximately) in many cases of interest:
-an uninformative prior will be (by definition) much wider than the training
-likelihood.  Additionally, because the validation set is often much
-smaller than the training set, it will give a much weaker constraint on the
-model.  For this reason, it is safe to assume that the cross-validation
-likelihood is wider than the training likelihood.
-
-Second, the model priors must be roughly equal.  This allows us to drop the
-second term in the above equation and recover the likelihood formulation.
-
-We should summarize these assumptions here:
+the delta function collapses the integral, the remaining term cancels,
+and we find $\widetilde{L}_{CV} \approx {L}_{CV}$.  This approximation
+involves two related assumptions:
 \begin{enumerate}
-  \item The {\it training} likelihood does not have heavy tails, and is
-    approximately symmetric and strongly peaked.
-  \item The {\it cross-validation} likelihood is approximately constant
-    across the important region of the training likelihood.
-  \item The {\it parameter prior} is approximately constant across the important
-    region of the training likelihood (that is, it is uninformative).
-  \item The {\it model prior} for different models is approximately equal
-    (that is, the model prior is uninformative).
+  \item The variables \Dtr{} and $\theta_M$ are approximately independent
+    {\it on scales of interest}.
+  \item The probability distribution $P(\theta_M|\Dtr, M, I)$ is very narrow
+    {\it on scales of interest}.
 \end{enumerate}
-When these assumptions are met, the cross-validation and Bayesian approaches
-will lead to similar results.
+The scale of interest, as seen in the bottom line of \eqn{LCV_derivation},
+is the scale over which the validation likelihood $P(\Dva|\theta_M, M, I)$
+varies significantly: if the validation likelihood is very slowly changing,
+then the MLE approximation holds and $\widetilde{L}_{CV} \approx {L}_{CV}$.
+This approximation is visualized in \fig{approx_vis}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{plot_collapse_1.pdf}
+  \caption{A schematic visualization of the probability approximation used to
+    relate cross-validation to the Bayesian formalism.  The left panel shows
+    the true joint distribution between the training data \Dtr{} and the
+    model parameters $\theta_M$.  The right panel shows the approximation
+    given by \eqn{CV_approximation}.}
+  \label{fig:approx_vis}
+\end{figure}
+
+Can we expect this approximation to be valid?  The answer depends on the
+precise relationship between the model $M$, the training data \Dtr, and
+the validation data \Dva{}.  In particular, if the size of the training set
+is much larger than the size of the cross-validation set, and if the two
+are consistent with being drawn from the same distribution, this approximation
+will hold (see further discussion below).
+
+In the regime where this approximation holds, we can use the derived
+approximation to learn the relationship between the cross-validation
+likelihood $L_{CV}$ and the odds ratio $O_{21}$ for two models.  From
+\eqn{CV_approximation} we have:
+\begin{eqnarray}
+  \widetilde{L}_{CV} &=& P(\Dtr,\theta_M|M,I)\nonumber\\
+                    &=& \frac{P(D|M, I)}{P(\Dtr|M, I)}
+\end{eqnarray}
+Using this result, the odds ratio given by \eqn{odds_ratio} can be expressed
+\begin{equation}
+  O_{21} = \frac{\widetilde{L}_{CV,2}}{\widetilde{L}_{CV,1}}
+          \frac{P(\Dtr|M_2,I)}{P(\Dtr|M_1,I)}.
+\end{equation}
+The odds ratio is related to the approximate cross-validation likelihood,
+multiplied by a data posterior.  Looking more closely, though, we see
+an interesting result: the second quotient looks just like the odds
+ratio computed from the {\it training data} only.  If we define
+\begin{equation}
+  O_{21}^{\rm TR} \equiv  \frac{P(\Dtr|M_2,I)}{P(\Dtr|M_1,I)},
+\end{equation}
+then the odds ratio can be expressed
+\begin{equation}
+  O_{21} = \frac{\widetilde{L}_{CV,2}}{\widetilde{L}_{CV,1}} O_{21}^{\rm TR}.
+\end{equation}
+This expression suggests an iterative approach to approximating the odds
+ratio without computing a single integral over parameter space:
+the odds ratio for the full data can be expressed as a product of the
+cross-validation scores and the odds ratio for the training data. The
+odds ratio for the training data in turn can be expressed in terms of
+the cross-validation applied to a subset.  This procedure can be repeated,
+as long as the approximation in \eqn{CV_approximation} holds.
+
+Perhaps more importantly, this approach {\it removes the need to explicitly
+choose the prior} which appears in \eqn{odds_ratio}.  This is a very valuable
+trait, but comes at the cost of the approximation at each step.  Below we
+will attempt to quantify the effect of this approximation in particular
+situations, and explicitly compare the exact results with the approximations
+in a variety of settings.
 
 [think about some examples]
 
@@ -292,6 +337,10 @@ the Bayesian formulation?
 We should come up with some good ones.
 
 \section{Extension to Other CV Schemes}
+
+We might be able to make the leap to $K$-fold cross-validation due to the fact
+that adding a single training point to a set will (for well-behaved sets)
+have a negligible effect on the total likelihood.
 
 \begin{eqnarray}
 p(D\given\theta,H) &=& \prod_{n=1}^N p(D_n\given\theta,H)

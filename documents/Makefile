@@ -1,10 +1,10 @@
 .SUFFIXES: .tex .pdf
-all: cv.pdf figs
+all: cv.pdf figures
 
 LATEX = pdflatex
 CHECK_RERUN = grep Rerun $*.log
 
-figs:
+figures:
 	python ../generate_figs.py
 
 %.pdf: %.tex
