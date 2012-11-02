@@ -210,13 +210,32 @@ observations contributes very little to the predictive power of the model.
 This is most nearly approached in the extreme case of leave-one-out CV
 where each $S_k$ contains a single datum $d_k$.
 
-Even in this limit, while the approximation is likely valid for $k \gg 1$
-where the model is already well constrained by the $k-1$ previous data,
+Even in this limit, the approximation is likely valid for individual terms
+of the product with $k \gg 1$
+(where the model is already well constrained by the $k-1$ previous data),
 for $k \sim 1$ the approximation is less likely to be accurate.
 It will break down
 {\it unless the prior is very informative compared to any single data point}.
 For such an informative prior, the addition of a single data point will
 have a negligible effect on the prediction, and allow the contribution to the
 quotient to be close to 1.
+
+\section{Discussion}
+It is interesting that the presence of ``uninformative priors'' leads to a
+large divergence between the results of cross-validation and Bayesian model
+comparison.  But more curious still is that cross-validation {\it with no
+prior input} comes close to the results of the Bayesian formalism which,
+by assumption, includes a prior that is not only informative, but correct!
+How can this be?
+
+This apparently free information in CV comes from the fact that it
+double-counts the data, and {\it we assume the data are consistent with the
+model}.  That is, the data themselves are, in a sense, used to generate
+the required informative prior.  If this assumption breaks down, the CV
+score can still be useful, but it is no longer an approximation to the
+Bayes integral.
+
+Another important question is whether these 
+
 
 \end{document}
