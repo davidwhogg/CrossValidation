@@ -18,7 +18,17 @@
 \newcommand{\Ntr}{\ensuremath{N^{\rm TR}}}
 \newcommand{\Nva}{\ensuremath{N^{\rm V}}}
 
+\newcommand{\thetamax}[1]{\ensuremath{\hat{\theta}^{\max}_{#1}}}
+\newcommand{\LCV}[1]{\ensuremath{L_{CV}}(#1)}
+\newcommand{\LCVk}[1]{\ensuremath{L^{(k)}_{CV}}(#1)}
+\newcommand{\LPPC}[1]{\ensuremath{L_{PPC}}(#1)}
+\newcommand{\LPPCk}[1]{\ensuremath{L^{(k)}_{PPC}}(#1)}
+
+\newcommand{\Tkplus}{\ensuremath{T_k^{(+)}}}
+\newcommand{\Tkminus}{\ensuremath{T_k^{(-)}}}
+
 \newcommand{\eqn}[1]{eq.~(\ref{eq:#1})}
+%\newcommand{\eqns}[1,2]{eqs.~(\ref{eq:#1}) and (\ref{eq:#2})}
 \newcommand{\fig}[1]{Fig.~\ref{fig:#1}}
 \newcommand{\paper}{document}
 
@@ -66,16 +76,18 @@ Cross validation is a well-known technique for model comparison.  Using
 maximum likelihood and the above notation, the training model is the
 maximum likelihood estimate (MLE) for the training data,
 \begin{equation}
-  \hat{\theta}^{\max}_{M,k} \equiv \arg\max_\theta \prod_{n \in T_k} P(d_n|\theta, M, I)
+  \thetamax{M,k} \equiv \arg\max_\theta \prod_{n \in T_k} P(d_n|\theta, M, I)
 \end{equation}
 and the cross-validation score is
 \begin{equation}
-  L^{(k)}_{CV}(M) \equiv P(S_k | \hat{\theta}^{\max}_{M,k}, M, I).
+  \label{eq:LCVk}
+  \LCVk{M} \equiv P(S_k | \thetamax{M,k}, M, I).
 \end{equation}
 In the case of multiple ($K$-fold) cross-validation, the total
 cross-validation score is
 \begin{equation}
-  L_{CV}(M) \equiv \prod_{k=1}^K L^{(k)}_{CV}(M)
+  \label{eq:LCV}
+  \LCV{M} \equiv \prod_{k=1}^K \LCVk{M}.
 \end{equation}
 The model with the highest cross-validation score is said to be the
 best model.
@@ -85,9 +97,18 @@ The PPC is an attempt to cache the CV procedure in more formal, Bayesian
 terms.  Each cross-validation score $L^{(k)}_{CV}(M)$ is really trying to
 get at the quantity
 \begin{equation}
-  L^{(k)}_{PPC}(M) \equiv P(S_k|T_k, M, I).
+  \label{eq:LPPCk}
+  \LPPCk{M} \equiv P(S_k|T_k, M, I).
 \end{equation}
 This can be thought of as a Bayesian approach to single cross-validation.
+One might be tempted, in analogy with CV, to define
+\begin{equation}
+  \label{eq:LPPC}
+  \LPPC{M} \equiv \prod_{k=1}^K \LPPCk{M}
+\end{equation}
+as a global measure of the likelihood using $K$-fold PPC:
+unfortunately, this is not well-motivated within Bayesianism
+as the individual probabilities in the product are not independent.
 
 \subsection{Posterior Model Probability}
 In a Bayesian setting, model selection is accomplished through computing
@@ -106,15 +127,18 @@ ratio,
   O_{21} &\equiv& \frac{P(M_2|D,I)}{P(M_1|D,I)}\\
         &=& \frac{P(D|M_2,I)}{P(D|M_1,I)}\ \ \frac{P(M_2|I)}{P(M_1|I)}.
 \end{eqnarray}
-In cases where models are equally likely {\it a priori}, the final term
-is often assumed to be unity.
+Often the final term is assumed to be unity, which is a statement
+that the models are equally likely {\it a priori}.  In this case, the
+odds ratio is given simply by the ratio of the global data likelihood.
 
 As one final note, we can rewrite the Bayes integral $P(D|M,I)$ in a way
 that will become useful later.  We will order the data with index $n$ and
-define subsets $D_{n} = \{d_1, d_2 ... d_{n-1}\}$, such that $D = D_N$.
-Then we can use probability axioms to write
+define subsets $D_{n} = \{d_1, d_2 ... d_{n-1}, d_n\}$, such that $D_0 = \{\}$
+and $D_N = D$.  With this notation we can compactly write the Bayes integral
+in terms of a chain of probabilities:
 \begin{equation}
-  P(D|M,I) = \prod_{n=1}^N 
+  \label{eq:bayes_chain}
+  P(D|M,I) = \prod_{n=1}^N P(d_n|D_{n-1},M,I)
 \end{equation}
 
 \section{Relationship Between the Approaches}
@@ -123,7 +147,112 @@ selection.  They range from CV, which is a computationally straightforward
 and statistically well-founded procedure, through the fully Bayesian approach
 which is in some senses the most rigorous, but has philisophical as well
 as computational difficulties.  Nevertheless, the three approaches are similar
-in that they use the {\it predictive power} of data
+in that they assume the data has {\it predictive power}, and use subsets of
+the data to evaluate the prediction given other subsets.
+
+In this section we will derive the explicit relationship between the three
+approaches, and outline the assumptions under which the three give the same
+results.
+
+\subsection{CV and PPC}
+The single-fold CV \& PPC scores given by %\eqns{LCVk, LPPCk}
+\eqn{LCVk} and \eqn{LPPCk}
+have a similar form, and can be related as follows:
+\begin{eqnarray}
+  \LPPCk{M} &=& P(S_k|T_k,M,I)\\
+            &=& \frac{P(S_k,T_k|M,I)}{P(T_k|M,I)}\\
+            &=& \frac{\int \dd\theta_M P(S_k,T_k,\theta_M|M,I)}
+                     {\int \dd\theta_M P(T_k,\theta_M|M,I)}\\
+            &=& \frac{\int \dd\theta_M P(S_k|T_k,\theta_M,M,I)
+                                       P(\theta_M|T_k,M,I)P(T_k|M,I)}
+                     {\int \dd\theta_M P(\theta_M|T_k,M,I) P(T_k|M,I)}\\
+            &=& \frac{\int \dd\theta_M P(S_k|\theta_M,M,I)P(\theta_M|T_k,M,I)}
+                     {\int \dd\theta_M P(\theta_M|T_k,M,I)}
+\end{eqnarray}
+where the final line follows from the assumption that $S_k$ and $T_k$ are
+independent given $\theta_M$.  If we make the assumption that
+\begin{equation}
+  P(\theta_M|T_k,M,I) \approx \delta(\theta_M - \thetamax{M,k})
+\end{equation}
+then the integrals collapse and we are left with
+\begin{equation}
+  \LPPCk{M} \approx \LCVk{M}
+\end{equation}
+This delta function approximation is well-motivated only under two conditions:
+\begin{enumerate}
+  \item The training sample $T_k$ and validation sample $S_k$ are
+    statistically similar, and
+  \item The model is much more tightly constrained by $T_k$ than by $S_k$.
+\end{enumerate}
+If these two assumptions are met, then the single-fold CV score \LCVk{M} is
+approximately equivalent to the PPC score \LPPCk{M}.
+
+This now gives us motivation for the definition of \LPPC{M} in \eqn{LPPC}.
+If the above assumptions are met for all $k$, then we have
+\begin{equation}
+  \LPPC{M} \approx \LCVk{M},
+\end{equation}
+even thought the definition of \LPPC{M} is not well-motivated within the
+Bayesian framework.
+
+\subsection{PPC and the Bayes Integral}
+Here we will show that the $K$-fold PPC expression \LPPC{M} (\eqn{LPPC}),
+though it is a strange expression in a Bayesian context, approximates the
+Bayes integral $P(D|M,I)$ when certain assumptions are met.
+To accomplish this we will define two more sets
+\begin{eqnarray}
+  \Tkplus &\equiv& \{d_n\}_{n=1}^{k-1}\\
+  \Tkminus &\equiv& \{d_n\}_{n=k+1}^N.
+\end{eqnarray}
+Notice that with this definition, $\Tkminus = D_{k-1}$ as defined above.
+We'll assume a leave-one-out cross-validation scheme, where $S_k =\{d_k\}$
+and $T_k = \Tkminus \cup \Tkplus$, for $1 \le k \le K$.  With this we
+have
+\begin{eqnarray}
+  \LCV{M} \approx \LPPC{M} &=& \prod_{k=1}^K P(d_k|\Tkminus,\Tkplus,M,I)\\
+         &=& \prod_{k-1}^K \frac{P(\Tkplus|d_k,\Tkminus,M,I) P(d_k|\Tkminus,M,I)}
+                               {P(\Tkplus|\Tkminus,M,I)}\\
+         &=& P(D|M,I) \prod_{k=1}^K \frac{P(\Tkplus|d_k,\Tkminus,M,I)}
+                                        {P(\Tkplus|\Tkminus,M,I)}
+\end{eqnarray}
+where the last line follows from \eqn{bayes_chain}.
+If the quotient on the right hand side is aproximately unity, then we will
+have
+\begin{equation}
+  \LCV{M} \approx \LPPC{M} \approx P(D|M,I).
+\end{equation}
+This quotient being unity is an interesting approximation: what it says is that
+given a validation set \Tkminus{}, the addition of a new observation $d_k$
+contributes very little to the predictive power of the model.  This is likely
+a valid approximation for $k \gg 1$ where the model is already well constrained
+by the $k-1$ previous data, but for $k \sim 1$ the approximation is less
+likely to be correct.  It will break down
+{\it unless the prior is very informative compared to a single data point}.
+For such an informative prior, the addition of a single data point will
+have a negligible effect on the prediction, and allow the contribution to the
+quotient to be close to 1.
+
+\subsection{Summary}
+We have shown the assumptions under which three common model selection criteria
+are approximately equivalent.  The 1-fold cross-validation score \LCVk{M}
+is approximately equivalent to the predictive probability criterion
+\LPPCk{M} if
+\begin{enumerate}
+  \item The training sample $T_k$ and validation sample $S_k$ are
+    statistically similar, and
+  \item The model is much more tightly constrained by $T_k$ than by $S_k$.
+\end{enumerate}
+In the common case that $S_k$ contains a single point, these criteria are
+met if the point comprising $S_k$ is not an outlier.
+
+The $K$-fold predictive probability criterion \LPPC{M} is equivalent to
+the Bayes integral $P(D|M,I)$ if
+\begin{enumerate}
+  \item[3] The constraint from a single point is inconsequential compared
+    to the constraint from the model prior.
+\end{enumerate}
+If these three conditions are met, then $K$-fold leave-one-out cross-validation
+will give approximately the same results as the Bayesian odds ratio.
 
 
 \end{document}
