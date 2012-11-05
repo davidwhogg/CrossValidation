@@ -148,11 +148,12 @@ and the fully Bayesian approach, which is probabilistically rigorous, but
 computationally challenging.  The approaches are similar in that they assume
 the data have {\it predictive power} and evaluate the likelihood of each
 individual datum using subsets of the remaining data.  Furthermore, the
-results have the same dimensions.
+results have the same dimensions, which makes it likely that they are
+somehow related.
 
 In this section we will use these insights to derive the explicit
 relationship between the three approaches, and outline the assumptions
-under which the three give the same results.
+under which they give the same results.
 
 We'll begin by defining an intermediate probabilistic quantity, the
 Training-posterior Validation Likelihood (TPV)
@@ -168,18 +169,18 @@ and can be related by observing
             &=& \int P(S_k|\theta_M,M,I) P(\theta_M|T_k,M,I)\dd\theta_M
 \end{eqnarray}
 where we have assumed independence of $T_k$ and $S_k$ when conditioned on
-$\theta_M$, which is implied by the independence of the  $d_n$.  If we
-now make the assumption that
+$\theta_M$, which is implied by the independence of the  $d_n$.
+If we could make the approximation that
 \begin{equation}
   P(\theta_M|T_k,M,I) \approx \delta(\theta_M - \thetamax{M,k})
 \end{equation}
-then the integrals collapse and we are left with
+then the integral collapses and we are left with
 \begin{equation}
   \LTPVk{M} \approx \LCVk{M}
 \end{equation}
 This delta function approximation is well-motivated only under the condition
 that the model is much more tightly constrained by $T_k$ than by $S_k$.
-That is, the likelihood $P(T_k|\theta_M,M,I)$ is much ``narrower'' in
+That is, the likelihood $P(\theta_M|T_k,M,I)$ is much ``narrower'' in
 $\theta_M$-space than the likelihood $P(S_k|\theta_M,M,I)$.
 If this assumption is met, then the single-fold CV score \LCVk{M} is
 approximately equivalent to the TPV score \LTPVk{M}.
@@ -210,15 +211,15 @@ observations contributes very little to the predictive power of the model.
 This is most nearly approached in the extreme case of leave-one-out CV
 where each $S_k$ contains a single datum $d_k$.
 
-Even in this limit, the approximation is likely valid for individual terms
-of the product with $k \gg 1$
+Even in this limit, while the approximation is likely valid for individual
+terms of the product with $k \gg 1$
 (where the model is already well constrained by the $k-1$ previous data),
 for $k \sim 1$ the approximation is less likely to be accurate.
 It will break down
 {\it unless the prior is very informative compared to any single data point}.
 For such an informative prior, the addition of a single data point will
-have a negligible effect on the prediction, and allow the contribution to the
-quotient to be close to 1.
+have a negligible effect on the prediction, and allow the contribution 
+of each point to the quotient to be close to 1.
 
 \section{Discussion}
 It is interesting that the presence of ``uninformative priors'' leads to a
@@ -234,8 +235,6 @@ model}.  That is, the data themselves are, in a sense, used to generate
 the required informative prior.  If this assumption breaks down, the CV
 score can still be useful, but it is no longer an approximation to the
 Bayes integral.
-
-Another important question is whether these 
 
 
 \end{document}
