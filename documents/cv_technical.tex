@@ -140,7 +140,8 @@ data to express the Bayes integral as
 This makes clear that the Bayesian approach is also based on a notion of
 {\it predictive power} of the data, and is similar in spirit to
 the CV approach.  This is also related to the ``sequential'' ideas
-of Bayesian inference.
+of Bayesian inference, whereby the results of a previous analysis become
+the prior for the subsequent analysis.
 
 \section{Relationship Between the Approaches}
 We seek a relationship between CV, which is computationally straightforward,
@@ -155,86 +156,56 @@ In this section we will use these insights to derive the explicit
 relationship between the three approaches, and outline the assumptions
 under which they give the same results.
 
-We'll begin by defining an intermediate probabilistic quantity, the
-Training-posterior Validation Likelihood (TPV)
+We start with the Bayes integral, as expressed by \eqn{bayes_chain},
+and express the probability in terms of an integral over $\theta_M$:
 \begin{equation}
-  \label{eq:LTPVk}
-  \LTPVk{M} \equiv P(S_k|T_k, M, I).
+  P(D|M, I) = \prod_{k=1}^k
+  \int P(S_k|\theta_M,M,I) 
+  \left[P(\theta_M|T_k,M,I)\frac{P(S_k|\Tkminus,M,I)}
+    {P(S_k|T_k,M,I)}
+  \right]\dd\theta_M
 \end{equation}
-This is the Bayesian ``answer'' to the CV score \LCVk{} given by
-\eqn{LCVk}.  The single-fold CV \& TPV scores have a similar form,
-and can be related by observing
-\begin{eqnarray}
-  \LTPVk{M} &=& P(S_k|T_k,M,I)\\
-            &=& \int P(S_k|\theta_M,M,I) P(\theta_M|T_k,M,I)\dd\theta_M
-\end{eqnarray}
-where we have assumed independence of $T_k$ and $S_k$ when conditioned on
-$\theta_M$, which is implied by the independence of the  $d_n$.
-If we could make the approximation that
-\begin{equation}
-  P(\theta_M|T_k,M,I) \approx \delta(\theta_M - \thetamax{M,k})
-\end{equation}
-then the integral collapses and we are left with
-\begin{equation}
-  \LTPVk{M} \approx \LCVk{M}
-\end{equation}
-This delta function approximation is well-motivated only under the condition
-that the model is much more tightly constrained by $T_k$ than by $S_k$.
-That is, the likelihood $P(\theta_M|T_k,M,I)$ is much ``narrower'' in
-$\theta_M$-space than the likelihood $P(S_k|\theta_M,M,I)$.
-If this assumption is met, then the single-fold CV score \LCVk{M} is
-approximately equivalent to the TPV score \LTPVk{M}.
+where we have assumed independence of $S_k$ and $T_k$ when conditioned
+on $\theta_M$, which is implied by the independence of the  $d_n$.
+Looking more closely at this, we see that if the term in brackets
+could be approximated by $\delta(\theta_M - \thetamax{M,k})$, then
+each of the $K$ integrals would collapse and we'd recover exactly \eqn{LCV}.
+Thus, with this single approximation, we have $P(D|M, I) \approx \LCV{M}$
+and the two model selection schemes agree.
 
-The full $K$-fold CV score is a product of the $K$ \LCVk{M}s (\eqn{LCV}):
-this motivates taking the product of the \LTPVk{M}s.
-Although it is a probabilistic abomination, this product has the same units
-as the $K$-fold CV score and the Bayes integral, and under some additional
-assumptions approximates the Bayes integral, which we will show now.
-Using the above definitions, we can show
-\begin{eqnarray}
-  \LCV{M} &\approx& \prod_{k=1}^K \LTPVk{M} \\
-          &=& \prod_{k=1}^K P(S_k|\Tkminus,\Tkplus,M,I)\\
-          &=& \prod_{k-1}^K \frac{P(\Tkplus|S_k,\Tkminus,M,I) P(S_k|\Tkminus,M,I)}
-                               {P(\Tkplus|\Tkminus,M,I)}\\
-          &=& P(D|M,I) \prod_{k=1}^K \frac{P(\Tkplus|S_k,\Tkminus,M,I)}
-                                        {P(\Tkplus|\Tkminus,M,I)}
-\end{eqnarray}
-where the last line follows from \eqn{bayes_chain}.
-If the quotient on the right hand side could ever be
-aproximately unity, then we would have
-\begin{equation}
-  \LCV{M} \approx P(D|M,I).
-\end{equation}
-This quotient being unity is an interesting approximation: what it says is that
-given a validation set \Tkminus{}, the addition of a new set $S_k$ of
-observations contributes very little to the predictive power of the model.
-This is most nearly approached in the extreme case of leave-one-out CV
-where each $S_k$ contains a single datum $d_k$.
+This approximation can be viewed in two distinct parts:
+\begin{enumerate}
+  \item It requires $P(\theta_M|T_k,M,I)$ to be much ``narrower''
+    in $\theta_M$-space than $P(S_k|\theta_M, M, I)$.
+    If this is the case, then integrating over the
+    distribution is approximately equivalent to evaluating
+    $P(S_k|\theta_m,M,I)$ at
+    the maximum value of the distribution, \thetamax{M,k}.
+  \item It requires the quotient in the brackets to be approximately unity
+    for each $k$.
+\end{enumerate}
+The first of these approximations is likely to be true when the size of the
+validation sample $S_k$ is much smaller than the size of the training sample
+$T_k$, and when the data $D$ strongly constrain the model parameters
+$\theta_M$.
 
-Even in this limit, while the approximation is likely valid for individual
-terms of the product with $k \gg 1$
-(where the model is already well constrained by the $k-1$ previous data),
-for $k \sim 1$ the approximation is less likely to be accurate.
-It will break down
-{\it unless the prior is very informative compared to any single data point}.
-For such an informative prior, the addition of a single data point will
-have a negligible effect on the prediction, and allow the contribution 
-of each point to the quotient to be close to 1.
+The second piece is less likely to be an accurate approximation.
+If the size of each $S_k$ is small and the samples are statistically similar,
+then this approximation is likely to be accurate for $k \gg 1$:
+the addition of a small amount of new training data will not greatly
+affect the posterior for the validation sample.
+For $k \sim 1$, however, this approximation is more stringent:
+it says that the
+posterior probability of the validation sample {\it given the prior alone}
+is equal to the posterior probability {\it given the full training set}.
+Furthermore, because there is nothing special about the ordering of $k$,
+this more stringent constraint should be approximately true for
+each of the $K$ validation sets!
 
-\section{Discussion}
-It is interesting that the presence of ``uninformative priors'' leads to a
-large divergence between the results of cross-validation and Bayesian model
-comparison.  But more curious still is that cross-validation {\it with no
-prior input} comes close to the results of the Bayesian formalism which,
-by assumption, includes a prior that is not only informative, but correct!
-How can this be?
-
-This apparently free information in CV comes from the fact that it
-double-counts the data, and {\it we assume the data are consistent with the
-model}.  That is, the data themselves are, in a sense, used to generate
-the required informative prior.  If this assumption breaks down, the CV
-score can still be useful, but it is no longer an approximation to the
-Bayes integral.
-
+This observation leads to the insight regarding what defines cross-validation.
+The only way for the second approximation to be true is if the prior
+information $I$ contains the training data $T_k$.  If this is the case, then
+the quotient reduces trivially to unity, and the cross-validation score
+approximates the Bayes integral.
 
 \end{document}
