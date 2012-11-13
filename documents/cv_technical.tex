@@ -159,33 +159,43 @@ under which they give the same results.
 We start with the Bayes integral, as expressed by \eqn{bayes_chain},
 and express the probability in terms of an integral over $\theta_M$:
 \begin{equation}
+  \label{eq:full_approximation}
   P(D|M, I) = \prod_{k=1}^k
-  \int P(S_k|\theta_M,M,I) 
-  \left[P(\theta_M|T_k,M,I)\frac{P(S_k|\Tkminus,M,I)}
+  \left[\frac{P(S_k|\Tkminus,M,I)}
     {P(S_k|T_k,M,I)}
-  \right]\dd\theta_M
+  \right]
+  \int P(S_k|\theta_M,M,I) P(\theta_M|T_k,M,I) \dd\theta_M
 \end{equation}
 where we have assumed independence of $S_k$ and $T_k$ when conditioned
 on $\theta_M$, which is implied by the independence of the  $d_n$.
-Looking more closely at this, we see that if the term in brackets
-could be approximated by $\delta(\theta_M - \thetamax{M,k})$, then
-each of the $K$ integrals would collapse and we'd recover exactly \eqn{LCV}.
-Thus, with this single approximation, we have $P(D|M, I) \approx \LCV{M}$
-and the two model selection schemes agree.
+Looking more closely at this, we see that if $P(\theta_M|T_k,M,I)$
+could be approximated by $\delta(\theta_M - \thetamax{M,k})$,
+then each of the $K$ integrals would collapse and we'd recover an
+equation proportional to \eqn{LCV}, up to the quotient in brackets.
+If the quotient in brackets were further approximately unity, then
+\eqn{LCV} would be recovered exactly.  Thus, under these two
+approximations, we have $P(D|M,I) \approx \LCV{M}$ and the two
+model selection schemes agree.
 
-This approximation can be viewed in two distinct parts:
+These approximations will never be met exactly, but in certain situations
+may be accurate enough to be practical:
 \begin{enumerate}
-  \item It requires $P(\theta_M|T_k,M,I)$ to be much ``narrower''
+  \item The first approximation requires
+    $P(\theta_M|T_k,M,I)$ to be much ``narrower''
     in $\theta_M$-space than $P(S_k|\theta_M, M, I)$.
     If this is the case, then integrating over the
     distribution is approximately equivalent to evaluating
     $P(S_k|\theta_m,M,I)$ at
     the maximum value of the distribution, \thetamax{M,k}.
-  \item It requires the quotient in the brackets to be approximately unity
-    for each $k$.
+  \item The second approximation requires the quotient in the brackets
+    to be approximately unity for each $k$: in other words the likelihood
+    of the validation set $S_k$ must be nearly equal given either
+    the partial training set \Tkminus{} or the much larger training set
+    $T_k$.
 \end{enumerate}
-The first of these approximations is likely to be true when the size of the
-validation sample $S_k$ is much smaller than the size of the training sample
+The first of these approximations is likely to be sufficiently accurate
+when the size of the validation sample $S_k$
+is much smaller than the size of the training sample
 $T_k$, and when the data $D$ strongly constrain the model parameters
 $\theta_M$.
 
@@ -207,5 +217,88 @@ The only way for the second approximation to be true is if the prior
 information $I$ contains the training data $T_k$.  If this is the case, then
 the quotient reduces trivially to unity, and the cross-validation score
 approximates the Bayes integral.
+
+\section{Example}
+
+We will explore this by considering a simple example, of two single-parameter
+models:
+\begin{eqnarray}
+  {\rm \bf Model\ 1:} & y(t) = a_1t\\
+  {\rm \bf Model\ 2:} & y(t) = a_2\sin(t)
+\end{eqnarray}
+We consider the models on the domain $-2 \le t \le 2$.  \fig{model_description}
+shows these two models, along with $N=64$ points drawn from each model with
+gaussian error of width $\sigma_y = 1$.  The model parameters are drawn from
+a $\mathcal{N}(0, 1)$ prior distribution: with a particular choice of random
+seed, this gives $a_1 = a_2 = 1.79$.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\textwidth]{plot_toy_example_1.pdf}
+  \caption{The two models used for the simple example.  64 points are drawn
+    from each model with gaussian noise of width $\sigma_y = 1$.
+    The best-fit lines of each model are shown for each data.}
+  \label{fig:model_description}
+\end{figure}
+
+The first of the two approximations says that
+$P(\theta_M|T_k,M,I)$ is much narrower than
+$P(S_k|\theta_M,M,I)$ in $\theta_M$-space.
+We expect this to be the case when $S_k$ is much smaller than $T_k$.
+\fig{delta_approx} compares these two curves for the points shown in
+the upper panel of \fig{model_description}, using a single point in the
+validation set $S_1$.  For large datasets and leave-one-out cross-validation,
+this approximation will be valid.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\textwidth]{plot_toy_example_2.pdf}
+  \caption{}
+  \label{fig:delta_approx}
+\end{figure}
+
+The second approximation says that the quotient in \eqn{full_approximation}
+must be close to unity.  This expression can be rewritten as
+\begin{equation}
+  \label{eq:quotient_approx_2}
+  \prod_{k=1}^K \frac{P(S_k|\Tkminus,M,I)}
+    {P(S_k|T_k,M,I)}
+  = P(D|M,I)\prod_{k=1}^K \frac{P(T_k|M,I)}{P(D|M,I)},
+\end{equation}
+which involves only expressions of the Bayes integral for various subsets of
+the data.  We plot the components of this expression in
+\fig{quotient_approx}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\textwidth]{plot_toy_example_3.pdf}
+  \caption{}
+  \label{fig:quotient_approx}
+\end{figure}
+
+It is interesting to see that, although the quotient is not near unity in either
+case, the {\it deviations} from unity are very similar.  If this is the case,
+then we can expect CV and Bayesian model {\it comparison} to give the same
+results.
+
+{\it This figure shows that the contributions of each point to the deviation
+  between CV and Bayes are similar for each model... I've been trying to
+  figure out how we can estimate the deviation given in \eqn{quotient_approx_2}
+  without actually calculating the Bayes integrals in the expression...
+  haven't figured it out yet.}
+
+For model 1 data, the results are as follows:\\
+\begin{tabular}{llll}
+\hline
+& Model 1 & Model 2 & $\Delta_{12}$\\
+\hline
+$\log(L_{CV})$ & -52.37 &  -57.18  & -4.82\\
+$\log P(D|M,I)$ & -53.86 &  -58.34  & -4.48\\
+\hline
+\end{tabular}\\
+In this case, the cross-validation and Bayes method approximately
+agree, and find that the linear model is a better fit to the linear data.
+The difference between the two measures for each model can be accounted
+for in the expressions derived above.
 
 \end{document}
