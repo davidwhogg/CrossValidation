@@ -1,5 +1,5 @@
 .SUFFIXES: .tex .pdf
-all: cv.pdf cv_technical.pdf figures
+all: cv_technical.pdf
 
 LATEX = pdflatex
 CHECK_RERUN = grep Rerun $*.log
