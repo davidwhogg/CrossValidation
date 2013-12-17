@@ -301,4 +301,55 @@ agree, and find that the linear model is a better fit to the linear data.
 The difference between the two measures for each model can be accounted
 for in the expressions derived above.
 
+
+\section{Jake's Notes}
+Some notes from Jake, December 2013
+
+Bayes integral written (\eqn{bayes_chain}):
+\begin{equation}
+  P(D|M,I) = \prod_{k=1}^K P(S_k|\Tkminus,M,I).
+\end{equation}
+
+Re-express this as (\eqn{full_approximation}):
+\begin{equation}
+  P(D|M, I) = \prod_{k=1}^k
+  \left[\frac{P(S_k|\Tkminus,M,I)}
+    {P(S_k|T_k,M,I)}
+  \right]
+  \int P(S_k|\theta_M,M,I) P(\theta_M|T_k,M,I) \dd\theta_M
+\end{equation}
+
+Re-write the quotient as:
+\begin{equation}
+  P(D|M, I) = \prod_{k=1}^k
+  \left[\frac{P(S_k|\Tkminus,M,I) P(\Tkplus|\Tkminus,M,I)}
+             {P(S_k\Tkplus|\Tkminus,M,I)}
+  \right]
+  \int P(S_k|\theta_M,M,I) P(\theta_M|T_k,M,I) \dd\theta_M
+\end{equation}
+
+Two things needed for this to be equal:
+\begin{itemize}
+
+\item $P(\theta_M|T_k,M,I) \approx \delta(\theta_M - \thetamax{M,k})$.  This
+  is equivalent to requiring that $P(\theta_M|T_k,M,I)$ to be much ``narrower''
+  in $\theta_M$-space than $P(S_k|\theta_M, M, I)$.
+
+\item Term in quotients equal to unity for all $k$.  Notice that the quotient
+  is written in the form
+  \begin{displaymath}
+    \frac{P(A)P(B)}{P(A,B)}
+  \end{displaymath}
+  which is unity only if $A$ and $B$ are independent.  That is, the term in
+  quotients is unity if for all $k$, $S_k$ and $\Tkplus$ are
+  independent when conditioned on $\Tkminus$, $M$, and $I$.
+\end{itemize}
+So, what this boils down to is this: cross-validation approximates the Bayes
+integral when (1) The data are informative, and (2) the data is iid with
+well-chosen, unbiased CV sets.
+
+
+
+
+
 \end{document}
